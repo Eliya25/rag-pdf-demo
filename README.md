@@ -8,6 +8,8 @@ The snapshot is locked to Gemini mode and `gemini-3.5-flash-lite`. `GEMINI_DEMO_
 
 The demo applies these per-process or per-session limits: 5 MiB PDF, 25 pages, 100,000 extracted characters, 100 chunks, 1,000 characters per question, four retrieved chunks, four recent history messages, 10 admitted questions per session, a 20-second interval per session, 20 Gemini generation attempts per rolling process hour, one concurrent indexing operation, one concurrent generation, and 256 output tokens.
 
+Disabling Gemini requests disables chat generation while keeping PDF upload and local indexing available. Uploading a PDF does not construct a Gemini client or make a Gemini request.
+
 Provider failures do not trigger automatic retries or a different provider/model.
 
 Counters and concurrency guards are held in process memory. They reset on app restart and do not coordinate multiple processes or replicas. They are best-effort abuse controls, not a durable quota or a guarantee of zero cost or availability. An open app can have its shared quota exhausted by visitors. Prefer invite-only access for an initial pilot.

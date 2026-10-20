@@ -8,7 +8,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from config import load_settings
-from demo_safety import DemoSafetyGuard, question_within_limit
+from demo_safety import DemoSafetyGuard, demo_capabilities, question_within_limit
 from local_embedding import LocalEmbedding
 from pdf_reader import PdfReader
 from prompts import build_messages
@@ -78,6 +78,11 @@ for key, default in {"pdf_id": None, "pdf_name": None, "index": None,
 
 st.title("Ask Your PDF")
 demo_guard = load_demo_safety_guard() if settings.public_demo_mode else None
+can_upload, _ = demo_capabilities(
+    settings.public_demo_mode,
+    settings.gemini_demo_enabled,
+    st.session_state.index is not None,
+)
 with st.sidebar:
     st.subheader("Model")
     st.write(f"Provider: **{settings.provider}**")
@@ -91,11 +96,9 @@ with st.sidebar:
     upload = st.file_uploader(
         "Upload a text PDF",
         type=["pdf"],
-        disabled=settings.public_demo_mode and not settings.gemini_demo_enabled,
+        disabled=not can_upload,
     )
-    if upload is not None and (
-        not settings.public_demo_mode or settings.gemini_demo_enabled
-    ):
+    if upload is not None and can_upload:
         max_upload_bytes = settings.max_file_mb * 1024 * 1024
         if upload.size > max_upload_bytes:
             st.session_state.update(pdf_id=None, pdf_name=None, index=None,
@@ -150,10 +153,14 @@ for message in st.session_state.chat:
         if message.get("sources"):
             show_sources(message["sources"])
 
+_, can_generate = demo_capabilities(
+    settings.public_demo_mode,
+    settings.gemini_demo_enabled,
+    st.session_state.index is not None,
+)
 question = st.chat_input(
     "Ask a question about the document",
-    disabled=(st.session_state.index is None
-              or (settings.public_demo_mode and not settings.gemini_demo_enabled)),
+    disabled=not can_generate,
 )
 if question:
     generation_acquired = False

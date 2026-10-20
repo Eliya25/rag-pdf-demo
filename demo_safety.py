@@ -16,6 +16,23 @@ def question_within_limit(question: str, max_chars: int) -> bool:
     return len(question) <= max_chars
 
 
+def demo_capabilities(
+    public_demo_mode: bool,
+    gemini_demo_enabled: bool,
+    index_available: bool,
+) -> tuple[bool, bool]:
+    """Return whether upload and answer generation are available in the UI.
+
+    PDF parsing, embedding, and indexing are local operations, so the Gemini
+    generation switch never disables uploads. Public chat still fails closed.
+    """
+    can_upload = True
+    can_generate = index_available and (
+        not public_demo_mode or gemini_demo_enabled
+    )
+    return can_upload, can_generate
+
+
 class DemoSafetyGuard:
     """Non-blocking semaphores and an atomic rolling request budget.
 

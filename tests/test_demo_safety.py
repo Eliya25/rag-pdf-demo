@@ -6,8 +6,10 @@ import pytest
 from demo_safety import (
     MAX_PROCESS_REQUESTS_PER_HOUR,
     DemoSafetyGuard,
+    demo_capabilities,
     question_within_limit,
 )
+from upload_lifecycle import read_upload_bytes
 
 
 class FakeClock:
@@ -24,6 +26,43 @@ class FakeClock:
 def test_question_length_limit_includes_boundary_only():
     assert question_within_limit("x" * 1_000, 1_000)
     assert not question_within_limit("x" * 1_001, 1_000)
+
+
+def test_public_upload_and_indexing_remain_available_when_gemini_is_disabled():
+    can_upload, can_generate = demo_capabilities(
+        public_demo_mode=True,
+        gemini_demo_enabled=False,
+        index_available=False,
+    )
+
+    assert can_upload is True
+    assert can_generate is False
+
+
+def test_public_generation_requires_enabled_gemini_and_an_index():
+    assert demo_capabilities(True, False, True) == (True, False)
+    assert demo_capabilities(True, True, False) == (True, False)
+    assert demo_capabilities(True, True, True) == (True, True)
+
+
+def test_disabled_generation_keeps_pdf_size_and_indexing_guards():
+    can_upload, can_generate = demo_capabilities(True, False, False)
+    assert can_upload is True
+    assert can_generate is False
+
+    class OversizedUpload:
+        size = 5 * 1024 * 1024 + 1
+
+        def getvalue(self):
+            raise AssertionError("oversized upload must not be copied")
+
+    with pytest.raises(ValueError, match="upload size limit"):
+        read_upload_bytes(OversizedUpload(), max_bytes=5 * 1024 * 1024)
+
+    guard = DemoSafetyGuard()
+    assert guard.try_acquire_indexing()
+    assert guard.try_acquire_indexing() is False
+    guard.release_indexing()
 
 
 def test_session_question_limit_and_cooldown_use_fake_clock():
