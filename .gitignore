@@ -1,0 +1,31 @@
+# Secrets and local configuration
+.env
+.streamlit/secrets.toml
+*.env
+*.secret
+*.pdf
+
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Model and package caches/weights
+.cache/
+.huggingface/
+models/
+*.safetensors
+pytorch_model*.bin
+*.pt
+*.pth
+*.onnx
+
+# Editors and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
